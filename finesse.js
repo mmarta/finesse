@@ -14,15 +14,16 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 
 		//Finesse program constants
 		Finesse.UPDATE_MODE_UNINITIALIZED = -1;
-		Finesse.UPDATE_MODE_VSYNC = 0;
+		Finesse.UPDATE_MODE_SCREEN_SYNC = 0;
 		Finesse.UPDATE_MODE_TIMEOUT = 1;
 		Finesse.UPDATE_MODE_SAFE = Finesse.UPDATE_MODE_TIMEOUT;
 		Finesse.updateMode = -1;
+		Finesse.frameWaitLeft = 0;
 
 		//Finesse execution code
 		Finesse.registerUpdateMode = function(mode) {
 			switch(mode) {
-				case Finesse.UPDATE_MODE_VSYNC:
+				case Finesse.UPDATE_MODE_SCREEN_SYNC:
 					if(!window.requestAnimationFrame) {
 						return false;
 					}
@@ -38,19 +39,42 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 			}
 		};
 
+		var internalFrameFunction = function() {
+			Finesse.frameWaitLeft--;
+
+			if(Finesse.frameWaitLeft == 0) {
+				Finesse.runFunction();
+			} else {
+				Finesse.waitNextFrame();
+			}
+		}
+
+		Finesse.waitNextFrame = function(frameCount) {
+			if(!frameCount) {
+				if(Finesse.frameWaitLeft == 0) {
+					frameCount = 1;
+				} else {
+					frameCount = Finesse.frameWaitLeft;
+				}
+			}
+			Finesse.frameWaitLeft = frameCount;
+
+			switch(Finesse.updateMode) {
+				case Finesse.UPDATE_MODE_SCREEN_SYNC:
+					requestAnimationFrame(internalFrameFunction);
+					break;
+				case Finesse.UPDATE_MODE_SAFE:
+					setTimeout(internalFrameFunction, 17);
+					break;
+			}
+		};
+
 		Finesse.runPogramLoop = function(programFunc) {
 			switch(Finesse.updateMode) {
-				case Finesse.UPDATE_MODE_VSYNC:
-					Finesse.runFunction = function() {
-						programFunc();
-						requestAnimationFrame(Finesse.runFunction);
-					};
-					Finesse.runFunction();
-					break;
+				case Finesse.UPDATE_MODE_SCREEN_SYNC:
 				case Finesse.UPDATE_MODE_SAFE:
 					Finesse.runFunction = function() {
 						programFunc();
-						setTimeout(Finesse.runFunction, 17);
 					};
 					Finesse.runFunction();
 					break;
@@ -86,7 +110,8 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 				buffer2DContext: bufferCanvas.getContext('2d'),
 				baseLocation: null,
 				width: w,
-				height: h
+				height: h,
+				backgroundLayers: {}
 			};
 		};
 
@@ -212,6 +237,97 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 
 			context.fillStyle = color;
 			context.fillRect(0, 0, cv.width, cv.height);
+		};
+
+		Finesse.BACKGROUND_LAYER_TILED_TYPE = 0;
+		Finesse.BACKGROUND_LAYER_FULL_TYPE = 0;
+
+		//Finesse background code
+		Finesse.registerTiledBackgroundLayer = function(pageDisplay, backgroundID, tileSheetImage, tileArray, tilePixelSize, repeat) {
+			var layer = {
+				data: tileArray,
+				tiles: tileSheetImage,
+				tileSize: tilePixelSize,
+				repeat: repeat,
+				type: Finesse.BACKGROUND_LAYER_TILED_TYPE,
+				x: 0,
+				y: 0
+			};
+
+			pageDisplay.backgroundLayers[backgroundID] = layer;
+		};
+
+		Finesse.scrollBackground = function(pageDisplay, backgroundID, x, y) {
+			var layer = pageDisplay.backgroundLayers[backgroundID];
+
+			if(!layer) {
+				throw "FinesseError: This layer does not exist.";
+			}
+
+			layer.x = x;
+			layer.y = y;
+		};
+
+		Finesse.drawBackgroundLayer = function(pageDisplay, backgroundID) {
+			var layer = pageDisplay.backgroundLayers[backgroundID],
+				context = pageDisplay.buffer2DContext,
+				i, j, lenI, lenJ, layerX, layerY, repeatStartX;
+
+			var data = layer.data,
+				tiles = layer.tiles,
+				tileSize = layer.tileSize;
+
+			if(!layer) {
+				throw "FinesseError: This layer does not exist.";
+			}
+
+			if(layer.type == Finesse.BACKGROUND_LAYER_TILED_TYPE) { //Tile type
+				if(layer.repeat) { //Repeated layers
+					startX = layerX;
+
+					iLen = data.length;
+					layerX = layer.x;
+					layerY = layer.y;
+					for(i = 0; true; i++) {
+						jLen = data[i].length;
+						for(j = 0; true; j++) {
+							context.drawImage(tiles, data[i][j][0] * tileSize, data[i][j][1] * tileSize, tileSize, tileSize, layerX, layerY, tileSize, tileSize);
+							layerX += tileSize;
+							if(layerX >= pageDisplay.width) {
+								break;
+							}
+							if(j >= jLen - 1) {
+								j = -1;
+							}
+						}
+						layerY += tileSize;
+						layerX = layer.x;
+						if(layerY >= pageDisplay.height) {
+							break;
+						}
+						if(i >= iLen - 1) {
+							i = -1;
+						}
+					}
+				} else {
+					iLen = data.length;
+					layerX = layer.x;
+					layerY = layer.y;
+					for(i = 0; i < iLen; i++) {
+						jLen = data[i].length;
+						for(j = 0; j < jLen; j++) {
+							context.drawImage(tiles, data[i][j][0] * tileSize, data[i][j][1] * tileSize, tileSize, tileSize, layerX, layerY, tileSize, tileSize);
+							layerX += tileSize;
+						}
+						layerY += tileSize;
+						layerX = layer.x;
+					}
+				}
+			}
+		}
+
+		Finesse.removeBackgroundLayer = function(pageDisplay, backgroundID) {
+			delete pageDisplay.backgroundLayers[backgroundID];
 		};
 
 		window.Finesse = Finesse;
