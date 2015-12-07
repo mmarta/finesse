@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Finesse Test Page</title>
+		<meta charset="utf-8" />
+	</head>
+	<body>
+		<div id="placeForDisplay1"></div>
+		<script src="finesse.js"></script>
+		<script>
+			//Set up Finesse display
+			var display1 = Finesse.createPageDisplay(224, 256);
+			//Finesse.addPageDisplayToElement(display1, 'placeForDisplay1');
+
+			//Set up other vars
+			var x = 0;
+			var img = new Image();
+			img.src = 'frogger-1.png';
+
+			//Actual Finesse program
+			var programLoop = function() {
+				x++;
+				if(x >= 224) {
+					x = -60;
+				}
+
+				Finesse.clearDisplayPage(display1, Finesse.createRGBColorHexString(0, 255, 255));
+				Finesse.drawSpriteToPageDisplay(display1, img, 120, 120, x, 0, 60, 60);
+				Finesse.renderPageDisplay(display1);
+			};
+
+			//Resize window event
+			window.onresize = function() {
+				Finesse.resizeSimulatedFullScreenPageDisplay(display1);
+			}
+
+			if(!Finesse.registerUpdateMode(Finesse.UPDATE_MODE_VSYNC)) {
+				throw "ERROR: No good!";
+			}
+			Finesse.simulateFullScreenPageDisplay(display1);
+			Finesse.runPogramLoop(programLoop);
+		</script>
+</html>
