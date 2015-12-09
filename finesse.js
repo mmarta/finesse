@@ -240,7 +240,7 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 		};
 
 		Finesse.BACKGROUND_LAYER_TILED_TYPE = 0;
-		Finesse.BACKGROUND_LAYER_FULL_TYPE = 0;
+		Finesse.BACKGROUND_LAYER_FULL_TYPE = 1;
 
 		//Finesse background code
 		Finesse.registerTiledBackgroundLayer = function(pageDisplay, backgroundID, tileSheetImage, tileArray, tilePixelSize, tileCols, tileRows, repeat) {
@@ -257,6 +257,28 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 				width: tileCols * tilePixelSize,
 				height: tileRows * tilePixelSize
 			};
+
+			if(pageDisplay.backgroundLayers[backgroundID]) {
+				throw 'FinesseError: A background layer already exists for key "' + backgroundID + '"';
+			}
+
+			pageDisplay.backgroundLayers[backgroundID] = layer;
+		};
+
+		Finesse.registerFullBackgroundLayer = function(pageDisplay, backgroundID, img, repeat) {
+			var layer = {
+				image: img,
+				repeat: repeat,
+				type: Finesse.BACKGROUND_LAYER_FULL_TYPE,
+				x: 0,
+				y: 0,
+				width: img.width,
+				height: img.height
+			};
+
+			if(pageDisplay.backgroundLayers[backgroundID]) {
+				throw 'FinesseError: A background layer already exists for key "' + backgroundID + '"';
+			}
 
 			pageDisplay.backgroundLayers[backgroundID] = layer;
 		};
@@ -293,27 +315,32 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 				i, j, layerX, layerY, dataIndex, tile;
 
 			var data = layer.data,
-				tiles = layer.image,
+				img = layer.image,
 				tileSize = layer.tileSize
 				tileCols = layer.tileCols,
-				tileRows = layer.tileRows;
+				tileRows = layer.tileRows,
+				w = layer.width,
+				h = layer.height,
+				dW = pageDisplay.width,
+				dH = pageDisplay.height;
 
 			if(!layer) {
 				throw "FinesseError: This layer does not exist.";
 			}
 
 			if(layer.type == Finesse.BACKGROUND_LAYER_TILED_TYPE) { //Tile type
+				layerX = layer.x;
+				layerY = layer.y;
+
 				if(layer.repeat) { //Repeated layers
-					layerX = layer.x;
-					layerY = layer.y;
 					for(i = 0; true; i++) {
 						for(j = 0; true; j++) {
 							if(layerX > 0 - tileSize && layerY > 0 - tileSize && layerX < pageDisplay.width && layerY < pageDisplay.height) {
 								dataIndex = (j * tileCols) + i;
-								context.drawImage(tiles, data[dataIndex][0] * tileSize, data[dataIndex][1] * tileSize, tileSize, tileSize, layerX, layerY, tileSize, tileSize);
+								context.drawImage(img, data[dataIndex][0] * tileSize, data[dataIndex][1] * tileSize, tileSize, tileSize, layerX, layerY, tileSize, tileSize);
 							}
 							layerY += tileSize;
-							if(layerY >= pageDisplay.height) {
+							if(layerY >= dH) {
 								break;
 							}
 							if(j >= tileRows - 1) {
@@ -322,7 +349,7 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 						}
 						layerX += tileSize;
 						layerY = layer.y;
-						if(layerX >= pageDisplay.width) {
+						if(layerX >= dW) {
 							break;
 						}
 						if(i >= tileCols - 1) {
@@ -330,19 +357,43 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 						}
 					}
 				} else {
-					layerX = layer.x;
-					layerY = layer.y;
 					for(i = 0; i < tileCols; i++) {
 						for(j = 0; j < tileRows; j++) {
 							if(layerX > 0 - tileSize && layerY > 0 - tileSize && layerX < pageDisplay.width && layerY < pageDisplay.height) {
 								dataIndex = (j * tileCols) + i;
-								context.drawImage(tiles, data[dataIndex][0] * tileSize, data[dataIndex][1] * tileSize, tileSize, tileSize, layerX, layerY, tileSize, tileSize);
+								context.drawImage(img, data[dataIndex][0] * tileSize, data[dataIndex][1] * tileSize, tileSize, tileSize, layerX, layerY, tileSize, tileSize);
 							}
 							layerX += tileSize;
 						}
 						layerY += tileSize;
 						layerX = layer.x;
 					}
+				}
+			} else { //Full image type
+
+				if(layer.repeat) {
+					layerX = layer.x;
+					layerY = layer.y;
+
+					while(true) {
+						while(true) {
+							context.drawImage(img, 0, 0, w, h, layerX, layerY, w, h);
+
+							layerY += h;
+							if(layerY >= dH) {
+								break;
+							}
+						}
+						layerX += w;
+						layerY = layer.y;
+						if(layerX >= dW) {
+							break;
+						}
+					}
+				} else {
+					layerX = -1 * layer.x;
+					layerY = -1 * layer.y;
+					context.drawImage(img, layerX, layerY, w, h, 0, 0, w, h);
 				}
 			}
 		}
