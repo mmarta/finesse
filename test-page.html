@@ -7,39 +7,47 @@
 	<body>
 		<div id="placeForDisplay1"></div>
 		<script src="finesse.js"></script>
+		<script src="tileArray.js"></script>
 		<script>
 			//Set up Finesse display
 			var display1 = Finesse.createPageDisplay(224, 256);
-			//Finesse.addPageDisplayToElement(display1, 'placeForDisplay1');
+			Finesse.addPageDisplayToElement(display1, 'placeForDisplay1');
 
 			//Set up other vars
-			var bgY = 0;
+			var bgX = 0, bgY = 0;
 			var bgColor = Finesse.createRGBColorHexString(0, 0, 64);
 			var sprite = new Image(),
-				tile = new Image(),
-				tileArrayA = [],
-				tileArrayB = [];
+				tile = new Image();
 			sprite.src = 'sprite.png';
 			tile.src = 'tile.png';
 
-			tileArrayA.push([[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]);
-			tileArrayA.push([[1, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [1, 0]]);
-			tileArrayA.push([[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [2, 0], [2, 0], [2, 0], [2, 0], [3, 0], [3, 0], [3, 0], [3, 0], [2, 0], [2, 0], [2, 0], [2, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0]]);
-			tileArrayA.push([[1, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [1, 0]]);
+			var tileArrayA = [
+				[0, 0], [0, 0], [0, 0], [0, 0],
+				[1, 1], [0, 0], [0, 0], [1, 1],
+				[1, 1], [1, 1], [1, 1], [1, 1],
+				[1, 1], [0, 0], [0, 0], [1, 1]
+			];
 
-			tileArrayB.push([[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]);
-			tileArrayB.push([[1, 3], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [1, 3]]);
-			tileArrayB.push([[1, 3], [1, 3], [1, 3], [1, 3], [1, 3], [1, 3], [1, 3], [1, 3], [2, 3], [2, 3], [2, 3], [2, 3], [3, 3], [3, 3], [3, 3], [3, 3], [2, 3], [2, 3], [2, 3], [2, 3], [1, 3], [1, 3], [1, 3], [1, 3], [1, 3], [1, 3], [1, 3], [1, 3]]);
-			tileArrayB.push([[1, 3], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [1, 3]]);
+			var tileArrayB = [
+				[0, 0], [0, 0], [0, 0], [0, 0],
+				[1, 3], [0, 0], [0, 0], [1, 3],
+				[1, 3], [1, 3], [1, 3], [1, 3],
+				[1, 3], [0, 0], [0, 0], [1, 3]
+			];
 
-			Finesse.registerTiledBackgroundLayer(display1, 'rows', tile, tileArrayA, 8, true);
-			Finesse.registerTiledBackgroundLayer(display1, 'behindRows', tile, tileArrayB, 8, true);
+			Finesse.registerTiledBackgroundLayer(display1, 'rows', tile, tileArrayB, 8, 4, 4, true);
+			Finesse.registerTiledBackgroundLayer(display1, 'behindRows', tile, tileArrayA, 8, 4, 4, true);
 
 			//Actual Finesse program
 			var programLoop = function() {
-				bgY += 2;
-				Finesse.scrollBackground(display1, 'behindRows', 0, bgY >> 1);
-				Finesse.scrollBackground(display1, 'rows', 0, bgY);
+				bgY -= 2;
+
+				if(bgY < 0) {
+					bgY = 126;
+				}
+
+				Finesse.scrollBackground(display1, 'behindRows', bgX >> 1, bgY >> 1);
+				Finesse.scrollBackground(display1, 'rows', bgX, bgY);
 
 				Finesse.clearDisplayPage(display1, bgColor);
 				Finesse.drawBackgroundLayer(display1, 'behindRows');

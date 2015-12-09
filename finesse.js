@@ -243,15 +243,19 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 		Finesse.BACKGROUND_LAYER_FULL_TYPE = 0;
 
 		//Finesse background code
-		Finesse.registerTiledBackgroundLayer = function(pageDisplay, backgroundID, tileSheetImage, tileArray, tilePixelSize, repeat) {
+		Finesse.registerTiledBackgroundLayer = function(pageDisplay, backgroundID, tileSheetImage, tileArray, tilePixelSize, tileCols, tileRows, repeat) {
 			var layer = {
 				data: tileArray,
-				tiles: tileSheetImage,
+				image: tileSheetImage,
 				tileSize: tilePixelSize,
 				repeat: repeat,
 				type: Finesse.BACKGROUND_LAYER_TILED_TYPE,
 				x: 0,
-				y: 0
+				y: 0,
+				tileCols: tileCols,
+				tileRows: tileRows,
+				width: tileCols * tilePixelSize,
+				height: tileRows * tilePixelSize
 			};
 
 			pageDisplay.backgroundLayers[backgroundID] = layer;
@@ -259,23 +263,40 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 
 		Finesse.scrollBackground = function(pageDisplay, backgroundID, x, y) {
 			var layer = pageDisplay.backgroundLayers[backgroundID];
+			var w = layer.width, h = layer.height, dW = pageDisplay.width, dH = pageDisplay.height;
 
 			if(!layer) {
 				throw "FinesseError: This layer does not exist.";
+			} else if(x + dW > w || y + dH > h) {
+				if(!layer.repeat) {
+					throw "FinesseError: Your background scrolling is out of bounds. If you want a repeating background, please set repeat to true.";
+				}
+			} else if(x < 0 || y < 0) {
+				throw "FinesseError: Your background scrolling can't be less than 0, even in repeated backgrounds.";
 			}
 
-			layer.x = x;
-			layer.y = y;
+			if(x > w) {
+				x = x % w;
+			}
+
+			if(y + dH > h) {
+				y = y % h;
+			}
+
+			layer.x = 0 - x;
+			layer.y = 0 - y;
 		};
 
 		Finesse.drawBackgroundLayer = function(pageDisplay, backgroundID) {
 			var layer = pageDisplay.backgroundLayers[backgroundID],
 				context = pageDisplay.buffer2DContext,
-				i, j, lenI, lenJ, layerX, layerY, repeatStartX;
+				i, j, layerX, layerY, dataIndex, tile;
 
 			var data = layer.data,
-				tiles = layer.tiles,
-				tileSize = layer.tileSize;
+				tiles = layer.image,
+				tileSize = layer.tileSize
+				tileCols = layer.tileCols,
+				tileRows = layer.tileRows;
 
 			if(!layer) {
 				throw "FinesseError: This layer does not exist.";
@@ -283,40 +304,40 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 
 			if(layer.type == Finesse.BACKGROUND_LAYER_TILED_TYPE) { //Tile type
 				if(layer.repeat) { //Repeated layers
-					startX = layerX;
-
-					iLen = data.length;
 					layerX = layer.x;
 					layerY = layer.y;
 					for(i = 0; true; i++) {
-						jLen = data[i].length;
 						for(j = 0; true; j++) {
-							context.drawImage(tiles, data[i][j][0] * tileSize, data[i][j][1] * tileSize, tileSize, tileSize, layerX, layerY, tileSize, tileSize);
-							layerX += tileSize;
-							if(layerX >= pageDisplay.width) {
+							if(layerX > 0 - tileSize && layerY > 0 - tileSize && layerX < pageDisplay.width && layerY < pageDisplay.height) {
+								dataIndex = (j * tileCols) + i;
+								context.drawImage(tiles, data[dataIndex][0] * tileSize, data[dataIndex][1] * tileSize, tileSize, tileSize, layerX, layerY, tileSize, tileSize);
+							}
+							layerY += tileSize;
+							if(layerY >= pageDisplay.height) {
 								break;
 							}
-							if(j >= jLen - 1) {
+							if(j >= tileRows - 1) {
 								j = -1;
 							}
 						}
-						layerY += tileSize;
-						layerX = layer.x;
-						if(layerY >= pageDisplay.height) {
+						layerX += tileSize;
+						layerY = layer.y;
+						if(layerX >= pageDisplay.width) {
 							break;
 						}
-						if(i >= iLen - 1) {
+						if(i >= tileCols - 1) {
 							i = -1;
 						}
 					}
 				} else {
-					iLen = data.length;
 					layerX = layer.x;
 					layerY = layer.y;
-					for(i = 0; i < iLen; i++) {
-						jLen = data[i].length;
-						for(j = 0; j < jLen; j++) {
-							context.drawImage(tiles, data[i][j][0] * tileSize, data[i][j][1] * tileSize, tileSize, tileSize, layerX, layerY, tileSize, tileSize);
+					for(i = 0; i < tileCols; i++) {
+						for(j = 0; j < tileRows; j++) {
+							if(layerX > 0 - tileSize && layerY > 0 - tileSize && layerX < pageDisplay.width && layerY < pageDisplay.height) {
+								dataIndex = (j * tileCols) + i;
+								context.drawImage(tiles, data[dataIndex][0] * tileSize, data[dataIndex][1] * tileSize, tileSize, tileSize, layerX, layerY, tileSize, tileSize);
+							}
 							layerX += tileSize;
 						}
 						layerY += tileSize;
