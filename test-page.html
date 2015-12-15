@@ -43,14 +43,37 @@
 			Finesse.registerFullBackgroundLayer(display1, 'twinbee', bg, true);
 
 			Finesse.registerKeyboard();
+			Finesse.registerGameControllers();
 
 			//Actual Finesse program
 			var programLoop = function() {
-				if(Finesse.keys[40]) {
+				Finesse.pollGameControllers();
+
+				if(Finesse.keys[40] || Finesse.getGameControllerAxis(0, 1) > 0.5) {
 					bgY -= 2;
 
 					if(bgY < 0) {
 						bgY = 126;
+					}
+				} else if(Finesse.keys[38] || Finesse.getGameControllerAxis(0, 1) < -0.5) {
+					bgY += 2;
+
+					if(bgY >= 128) {
+						bgY = 0;
+					}
+				}
+
+				if(Finesse.keys[39] || Finesse.getGameControllerAxis(0, 0) > 0.5) {
+					bgX -= 2;
+
+					if(bgX < 0) {
+						bgX = 126;
+					}
+				} else if(Finesse.keys[37] || Finesse.getGameControllerAxis(0, 0) < -0.5) {
+					bgX += 2;
+
+					if(bgX >= 128) {
+						bgX = 0;
 					}
 				}
 

@@ -424,15 +424,47 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 			Finesse.keys = keys;
 		};
 
+		//Game controllers
 		Finesse.registerGameControllers = function() {
-			var controllers;
 			try {
-				controllers = navigator.getGamepads();
+				var controllers = navigator.getGamepads();
 			} catch(e) {
 				throw "FinesseError: This browser does not support game controllers.";
 			}
 
-			Finesse.gameControllers = controllers;
+			Finesse.gameControllersRegistered = true;
+		};
+
+		Finesse.pollGameControllers = function() {
+			if(!Finesse.gameControllersRegistered) {
+				throw "FinesseError: Game controllers have not been registered";
+			}
+
+			Finesse.gameControllers = navigator.getGamepads();
+		};
+
+		Finesse.getGameControllerAxis = function(controllerNum, axisNum) {
+			if(!Finesse.gameControllersRegistered) {
+				throw "FinesseError: Game controllers have not been registered.";
+			}
+
+			try {
+				return Finesse.gameControllers[controllerNum].axes[axisNum];
+			} catch(e) {
+				return 0;
+			}
+		};
+
+		Finesse.getGameControllerButton = function(controllerNum, buttonNum) {
+			if(!Finesse.gameControllersRegistered) {
+				throw "FinesseError: Game controllers have not been registered.";
+			}
+
+			try {
+				return Finesse.gameControllers[controllerNum].buttons[buttonNum].pressed;
+			} catch(e) {
+				return false;
+			}
 		};
 
 		Finesse.registerMouseOnElement = function(el) {
