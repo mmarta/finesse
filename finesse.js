@@ -402,6 +402,71 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 			delete pageDisplay.backgroundLayers[backgroundID];
 		};
 
+		//All inputs
+		Finesse.registerKeyboard = function() {
+			var i = 256, keys = new Array(i);
+			while(i--) {
+				keys[i] = false;
+			}
+
+			try {
+				window.addEventListener('keydown', function(e) {
+					keys[e.keyCode] = true;
+				});
+
+				window.addEventListener('keyup', function(e) {
+					keys[e.keyCode] = false;
+				});
+			} catch(e) {
+				throw "FinesseError: This browser does not support modern event listeners.";
+			}
+
+			Finesse.keys = keys;
+		};
+
+		Finesse.registerGameControllers = function() {
+			var controllers;
+			try {
+				controllers = navigator.getGamepads();
+			} catch(e) {
+				throw "FinesseError: This browser does not support game controllers.";
+			}
+
+			Finesse.gameControllers = controllers;
+		};
+
+		Finesse.registerMouseOnElement = function(el) {
+			try {
+				var obj = {
+					x: undefined,
+					y: undefined,
+					buttons: [
+						false,
+						false,
+						false,
+						false,
+						false,
+						false,
+						false,
+						false
+					]
+				};
+
+				window.addEventListener('mousemove', function(e) {
+					obj.x = e.offsetX;
+					obj.y = e.offsetY;
+				});
+
+				window.addEventListener('mousedown', function(e) {
+					keys[e.keyCode] = false;
+				});
+
+				return obj;
+			} catch(e) {
+				throw "FinesseError: This browser does not support modern event listeners.";
+			}
+		};
+
 		window.Finesse = Finesse;
 	})(window);
 }

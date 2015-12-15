@@ -42,12 +42,16 @@
 			Finesse.registerTiledBackgroundLayer(display1, 'behindRows', tile, tileArrayA, 8, 4, 4, true);
 			Finesse.registerFullBackgroundLayer(display1, 'twinbee', bg, true);
 
+			Finesse.registerKeyboard();
+
 			//Actual Finesse program
 			var programLoop = function() {
-				bgY -= 2;
+				if(Finesse.keys[40]) {
+					bgY -= 2;
 
-				if(bgY < 0) {
-					bgY = 126;
+					if(bgY < 0) {
+						bgY = 126;
+					}
 				}
 
 				Finesse.scrollBackground(display1, 'twinbee', 35, 128);
