@@ -17,7 +17,8 @@
 			var bgColor = Finesse.createRGBColorHexString(0, 0, 64);
 			var sprite = new Image(),
 				tile = new Image(),
-				bg = new Image();
+				bg = new Image(),
+				mouseObj;
 			sprite.src = 'sprite.png';
 			tile.src = 'tile.png';
 			bg.src = 'bells-whistles-3.png';
@@ -44,6 +45,7 @@
 
 			Finesse.registerKeyboard();
 			Finesse.registerGameControllers();
+			touchObj = Finesse.registerTouchOnPageDisplay(display1);
 
 			//Actual Finesse program
 			var programLoop = function() {

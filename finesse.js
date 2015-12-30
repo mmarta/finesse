@@ -111,6 +111,7 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 				baseLocation: null,
 				width: w,
 				height: h,
+				ratio: 1,
 				backgroundLayers: {}
 			};
 		};
@@ -175,11 +176,15 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 				calcW = (winH * ratio) >> 0;
 				calcY = 0;
 				calcX = (winW - calcW) >> 1;
+
+				pageDisplay.ratio = winH / pageDisplay.height;
 			} else {
 				calcW = winW;
 				calcH = (winW / ratio) >> 0;
 				calcX = 0;
 				calcY = (winH - calcH) >> 1;
+
+				pageDisplay.ratio = winW / pageDisplay.width;
 			}
 
 			style.position = 'fixed';
@@ -201,6 +206,8 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 			style.height = null;
 
 			canvas.remove();
+
+			pageDisplay.ratio = 1;
 
 			if(baseLoc != null) {
 				baseLoc.appendChild(canvas);
@@ -467,11 +474,12 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 			}
 		};
 
+		//Mouse events
 		Finesse.registerMouseOnElement = function(el) {
 			try {
 				var obj = {
-					x: undefined,
-					y: undefined,
+					x: -1,
+					y: -1,
 					buttons: [
 						false,
 						false,
@@ -484,14 +492,173 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 					]
 				};
 
-				window.addEventListener('mousemove', function(e) {
+				el.addEventListener('mousemove', function(e) {
 					obj.x = e.offsetX;
 					obj.y = e.offsetY;
 				});
 
-				window.addEventListener('mousedown', function(e) {
-					keys[e.keyCode] = false;
+				el.addEventListener('mouseout', function(e) {
+					obj.x = -1;
+					obj.y = -1;
 				});
+
+				el.addEventListener('mousedown', function(e) {
+					e.preventDefault();
+					obj.buttons[e.button] = true;
+				});
+
+				el.addEventListener('mouseup', function(e) {
+					e.preventDefault();
+					obj.buttons[e.button] = false;
+				});
+
+				return obj;
+			} catch(e) {
+				throw "FinesseError: This browser does not support modern event listeners.";
+			}
+		};
+
+		Finesse.registerMouseOnPageDisplay = function(pageDisplay) {
+			return Finesse.registerMouseOnElement(pageDisplay.displayCanvas);
+		};
+
+		Finesse.registerVirtualMouseOnPageDisplay = function(pageDisplay) {
+			try {
+				var el = pageDisplay.displayCanvas;
+
+				var obj = {
+					x: -1,
+					y: -1,
+					buttons: [
+						false,
+						false,
+						false,
+						false,
+						false,
+						false,
+						false,
+						false
+					]
+				};
+
+				el.addEventListener('mousemove', function(e) {
+					var ratio = pageDisplay.ratio;
+					obj.x = (e.offsetX / ratio) >> 0;
+					obj.y = (e.offsetY / ratio) >> 0;
+				});
+
+				el.addEventListener('mouseout', function(e) {
+					obj.x = -1;
+					obj.y = -1;
+				});
+
+				el.addEventListener('mousedown', function(e) {
+					e.preventDefault();
+					obj.buttons[e.button] = true;
+				});
+
+				el.addEventListener('mouseup', function(e) {
+					e.preventDefault();
+					obj.buttons[e.button] = false;
+				});
+
+				return obj;
+			} catch(e) {
+				throw "FinesseError: This browser does not support modern event listeners.";
+			}
+		};
+
+		//Mouse events
+		Finesse.registerTouchOnElement = function(el) {
+			try {
+				var obj = {
+					touches: [{
+							x: -1,
+							y: -1
+						}, {
+							x: -1,
+							y: -1
+						}, {
+							x: -1,
+							y: -1
+						}, {
+							x: -1,
+							y: -1
+						}
+					]
+				};
+
+				var touchFunction = function(e) {
+					var eventTouches = e.touches,
+						objTouches = obj.touches;
+					var i = 0;
+					for(i = 0; i < 4; i++) {
+						if(eventTouches[i]) {
+							objTouches[i].x = (eventTouches[i].clientX - display1.displayCanvas.offsetLeft) >> 0;
+							objTouches[i].y = (eventTouches[i].clientY - display1.displayCanvas.offsetTop) >> 0;
+						} else {
+							objTouches[i].x = -1;
+							objTouches[i].y = -1;
+						}
+					}
+				};
+
+				el.addEventListener('touchstart', touchFunction);
+				el.addEventListener('touchmove', touchFunction);
+				el.addEventListener('touchend', touchFunction);
+
+				return obj;
+			} catch(e) {
+				throw "FinesseError: This browser does not support modern event listeners.";
+			}
+		};
+
+		Finesse.registerTouchOnPageDisplay = function(pageDisplay) {
+			return Finesse.registerTouchOnElement(pageDisplay.displayCanvas);
+		};
+
+		Finesse.registerVirtualTouchOnPageDisplay = function(pageDisplay) {
+			try {
+				var el = pageDisplay.displayCanvas;
+				var obj = {
+					touches: [{
+							x: -1,
+							y: -1
+						}, {
+							x: -1,
+							y: -1
+						}, {
+							x: -1,
+							y: -1
+						}, {
+							x: -1,
+							y: -1
+						}
+					]
+				};
+
+				var touchFunction = function(e) {
+					var eventTouches = e.touches,
+						objTouches = obj.touches,
+						ratio = pageDisplay.ratio,
+						i = 0;
+
+					e.preventDefault();
+
+					for(i = 0; i < 4; i++) {
+						if(eventTouches[i]) {
+							objTouches[i].x = ((eventTouches[i].clientX - display1.displayCanvas.offsetLeft) / ratio) >> 0;
+							objTouches[i].y = ((eventTouches[i].clientY - display1.displayCanvas.offsetTop) / ratio) >> 0;
+						} else {
+							objTouches[i].x = -1;
+							objTouches[i].y = -1;
+						}
+					}
+				};
+
+				el.addEventListener('touchstart', touchFunction);
+				el.addEventListener('touchmove', touchFunction);
+				el.addEventListener('touchend', touchFunction);
 
 				return obj;
 			} catch(e) {
