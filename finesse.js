@@ -666,6 +666,223 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 			}
 		};
 
+		//All audio
+		Finesse.AUDIO_TYPE_UNINITIALIZED = -1;
+		Finesse.AUDIO_TYPE_NONE = 0;
+		Finesse.AUDIO_TYPE_ELEMENT = 1;
+		Finesse.AUDIO_TYPE_WEB_AUDIO = 2;
+
+		Finesse.audioType = Finesse.AUDIO_TYPE_UNINITIALIZED;
+		Finesse.audioSystemContext = undefined;
+
+		Finesse.registerAudio = function() {
+			var AudioContext = window.AudioContext || window.webkitAudioContext;
+
+			if(AudioContext) {
+				var context = new AudioContext();
+				var gainNode = context.createGain();
+
+				Finesse.audioSystemContext = context;
+				Finesse.audioType = Finesse.AUDIO_TYPE_WEB_AUDIO;
+			} else if(document.createElement('audio')) {
+				Finesse.audioType = Finesse.AUDIO_TYPE_ELEMENT;
+			} else {
+				Finesse.audioType = Finesse.AUDIO_TYPE_UNINITIALIZED;
+			}
+		};
+
+		Finesse.loadAudioFile = function(url, callback) {
+			var type = Finesse.audioType;
+			switch(type) {
+				case Finesse.AUDIO_TYPE_NONE:
+					throw "FinesseError: There is no audio available in this browser.";
+				case Finesse.AUDIO_TYPE_ELEMENT:
+					var el = document.createElement('audio');
+					try {
+						//Register the callback on load
+						el.addEventListener('canplay', callback, false);
+					} catch(e) {
+						throw "FinesseError: This browser does not support modern event listeners.";
+					}
+					el.src = url;
+
+					var audioObj = {
+						element: el
+					};
+					return audioObj;
+				case Finesse.AUDIO_TYPE_WEB_AUDIO:
+					var req = new XMLHttpRequest(),
+						context = Finesse.audioSystemContext,
+						audioObj = {
+							isPlaying: false
+						};
+					req.open('GET', url, true);
+					req.responseType = 'arraybuffer';
+
+					try {
+						req.onload = function() {
+							context.decodeAudioData(req.response, function(data) {
+								audioObj.bufferData = data;
+								if(callback) {
+									callback();
+								}
+							}, function() {
+								throw "FinesseError: Could not load audio.";
+							});
+						};
+
+						req.send();
+					} catch(e) {
+						throw "FinesseError: This browser does not support modern event listeners.";
+					}
+
+					return audioObj;
+				default:
+					throw "FinesseError: There is no audio initialized.";
+			}
+		};
+
+		Finesse.playAudio = function(audioObj, loop, volume, pan) {
+			var type = Finesse.audioType;
+			switch(type) {
+				case Finesse.AUDIO_TYPE_NONE:
+					throw "FinesseError: There is no audio available in this browser.";
+				case Finesse.AUDIO_TYPE_ELEMENT:
+					var el = audioObj.element;
+
+					if(volume !== undefined) {
+						el.volume = volume;
+					} else {
+						el.volume = 1;
+					}
+
+					if(loop !== undefined) {
+						el.loop = loop;
+					} else {
+						el.loop = false;
+					}
+
+					el.currentTime = 0;
+					el.pause();
+					el.currentTime = 0;
+					el.play();
+
+					break;
+				case Finesse.AUDIO_TYPE_WEB_AUDIO:
+					var context = Finesse.audioSystemContext;
+					var source = context.createBufferSource(),
+						gainNode = context.createGain(),
+						panNode = context.createStereoPanner();
+
+					if(audioObj.isPlaying) {
+						Finesse.stopAudio(audioObj);
+					}
+
+					source.buffer = audioObj.bufferData;
+					source.connect(gainNode);
+					gainNode.connect(panNode);
+					panNode.connect(context.destination);
+
+					if(volume !== undefined) {
+						gainNode.gain.value = volume;
+					} else {
+						gainNode.gain.value = 1;
+					}
+
+					if(pan !== undefined) {
+						panNode.pan.value = pan;
+					} else {
+						panNode.pan.value = 0;
+					}
+
+					if(loop !== undefined) {
+						source.loop = loop;
+					} else {
+						source.loop = false;
+					}
+
+					source.addEventListener('ended', function() {
+						audioObj.isPlaying = false;
+					}, false);
+
+					if(source.start) {
+						source.start(0);
+					} else {
+						source.noteOn(0);
+					}
+					audioObj.isPlaying = true;
+
+					audioObj.nodeSource = source;
+					audioObj.gainNode = gainNode;
+					audioObj.panNode = panNode;
+
+					break;
+				default:
+					throw "FinesseError: There is no audio initialized.";
+			}
+		};
+
+		Finesse.stopAudio = function(audioObj) {
+			var type = Finesse.audioType;
+			switch(type) {
+				case Finesse.AUDIO_TYPE_NONE:
+					throw "FinesseError: There is no audio available in this browser.";
+				case Finesse.AUDIO_TYPE_ELEMENT:
+					var el = audioObj.element;
+					el.pause();
+					el.currentTime = 0;
+
+					break;
+				case Finesse.AUDIO_TYPE_WEB_AUDIO:
+					var source = audioObj.nodeSource;
+					if(source) {
+						if(source.stop) {
+							source.stop(0);
+						} else {
+							source.noteOff(0);
+						}
+					}
+
+					audioObj.isPlaying = false;
+
+					break;
+				default:
+					throw "FinesseError: There is no audio initialized.";
+			}
+		};
+
+		Finesse.setAudioVolume = function(audioObj, volume) {
+			var type = Finesse.audioType;
+			switch(type) {
+				case Finesse.AUDIO_TYPE_NONE:
+					throw "FinesseError: There is no audio available in this browser.";
+				case Finesse.AUDIO_TYPE_ELEMENT:
+					var el = audioObj.element;
+					el.volume = volume;
+					break;
+				case Finesse.AUDIO_TYPE_WEB_AUDIO:
+					audioObj.gainNode.gain.value = volume;
+					break;
+				default:
+					throw "FinesseError: There is no audio initialized.";
+			}
+		};
+
+		Finesse.setAudioPan = function(audioObj, pan) {
+			var type = Finesse.audioType;
+			switch(type) {
+				case Finesse.AUDIO_TYPE_NONE:
+					throw "FinesseError: There is no audio available in this browser.";
+				case Finesse.AUDIO_TYPE_ELEMENT:
+					break;
+				case Finesse.AUDIO_TYPE_WEB_AUDIO:
+					audioObj.panNode.pan.value = pan;
+					break;
+				default:
+					throw "FinesseError: There is no audio initialized.";
+			}
+		};
+
 		window.Finesse = Finesse;
 	})(window);
 }

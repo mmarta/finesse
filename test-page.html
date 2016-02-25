@@ -18,7 +18,9 @@
 			var sprite = new Image(),
 				tile = new Image(),
 				bg = new Image(),
-				mouseObj;
+				mouseObj,
+				sound,
+				press = false;
 			sprite.src = 'sprite.png';
 			tile.src = 'tile.png';
 			bg.src = 'bells-whistles-3.png';
@@ -45,6 +47,10 @@
 
 			Finesse.registerKeyboard();
 			Finesse.registerGameControllers();
+
+			Finesse.registerAudio();
+			sound = Finesse.loadAudioFile('sound.mp3');
+
 			touchObj = Finesse.registerTouchOnPageDisplay(display1);
 
 			//Actual Finesse program
@@ -77,6 +83,15 @@
 					if(bgX >= 128) {
 						bgX = 0;
 					}
+				}
+
+				if(Finesse.keys[17] || Finesse.keys[18] || Finesse.keys[90] || Finesse.getGameControllerButton(0, 0)) {
+					if(!press) {
+						press = true;
+						Finesse.playAudio(sound);
+					}
+				} else {
+					press = false;
 				}
 
 				Finesse.scrollBackground(display1, 'twinbee', 35, 128);
