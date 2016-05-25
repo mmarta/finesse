@@ -6,10 +6,11 @@
 	</head>
 	<body>
 		<div id="placeForDisplay1"></div>
-		<script src="dist/finesse.min.js"></script>
+		<script src="../dist/finesse.min.js"></script>
 		<script>
 			//Set up Finesse display
 			var display1 = Finesse.createPageDisplay(224, 256);
+			var ctx = Finesse.retrieveDrawableContext(display1);
 			Finesse.addPageDisplayToElement(display1, 'placeForDisplay1');
 
 			//Set up other vars
@@ -103,6 +104,10 @@
 				Finesse.drawBackgroundLayer(display1, 'behindRows');
 				Finesse.drawBackgroundLayer(display1, 'rows');
 				Finesse.drawSpriteToPageDisplay(display1, sprite, 0, 0, 108, 224, 8, 8);
+
+				Finesse.drawPixelToPageDisplay(display1, 0, 0, '#ff0000');
+				Finesse.drawBoxToPageDisplay(display1, 1, 0, 10, 10, '#0000ff');
+
 				Finesse.renderPageDisplay(display1);
 				Finesse.waitNextFrame();
 			};

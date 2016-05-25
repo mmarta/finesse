@@ -116,6 +116,10 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 			};
 		};
 
+		Finesse.retrieveDrawableContext = function(pageDisplay) {
+			return pageDisplay.buffer2DContext;
+		};
+
 		Finesse.renderPageDisplay = function(pageDisplay) {
 			pageDisplay.display2DContext.drawImage(pageDisplay.bufferCanvas, 0, 0);
 		};
@@ -228,6 +232,16 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 
 		Finesse.drawScaledSpriteToPageDisplay = function(pageDisplay, img, spriteX, spriteY, spriteW, spriteH, displayX, displayY, displayW, displayH) {
 			pageDisplay.buffer2DContext.drawImage(img, spriteX, spriteY, spriteW, spriteH, displayX, displayY, displayW, displayH);
+		};
+
+		Finesse.drawPixelToPageDisplay = function(pageDisplay, x, y, color) {
+			Finesse.drawBoxToPageDisplay(pageDisplay, x, y, 1, 1, color);
+		};
+
+		Finesse.drawBoxToPageDisplay = function(pageDisplay, x, y, w, h, color) {
+			var ctx = pageDisplay.buffer2DContext;
+			ctx.fillStyle = color;
+			ctx.fillRect(x, y, w, h);
 		};
 
 		Finesse.createRGBColorHexString = function(r, g, b) {
