@@ -155,6 +155,9 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 			//Resize
 			Finesse.resizeSimulatedFullScreenPageDisplay(pageDisplay);
 			document.body.appendChild(canvas);
+			window.addEventListener('resize', function() {
+				Finesse.resizeSimulatedFullScreenPageDisplay(pageDisplay);
+			}, false);
 		};
 
 		Finesse.resizeSimulatedFullScreenPageDisplay = function(pageDisplay) {
