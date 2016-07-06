@@ -789,7 +789,7 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 					var context = Finesse.audioSystemContext;
 					var source = context.createBufferSource(),
 						gainNode = context.createGain(),
-						panNode = context.createStereoPanner();
+						panNode = context.createStereoPanner ? context.createStereoPanner() : undefined;
 
 					if(audioObj.isPlaying) {
 						Finesse.stopAudio(audioObj);
@@ -797,8 +797,12 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 
 					source.buffer = audioObj.bufferData;
 					source.connect(gainNode);
-					gainNode.connect(panNode);
-					panNode.connect(context.destination);
+					if(panNode) {
+						gainNode.connect(panNode);
+						panNode.connect(context.destination);
+					} else {
+						gainNode.connect(context.destination);
+					}
 
 					if(volume !== undefined) {
 						gainNode.gain.value = volume;
@@ -806,10 +810,12 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 						gainNode.gain.value = 1;
 					}
 
-					if(pan !== undefined) {
-						panNode.pan.value = pan;
-					} else {
-						panNode.pan.value = 0;
+					if(panNode) {
+						if(pan !== undefined) {
+							panNode.pan.value = pan;
+						} else {
+							panNode.pan.value = 0;
+						}
 					}
 
 					if(loop !== undefined) {
@@ -831,7 +837,9 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 
 					audioObj.nodeSource = source;
 					audioObj.gainNode = gainNode;
-					audioObj.panNode = panNode;
+					if(panNode) {
+						audioObj.panNode = panNode;
+					}
 
 					break;
 				default:
@@ -893,7 +901,9 @@ if(window.Finesse && Finesse.isFromNYJAMMAArcadeEngine) {
 				case Finesse.AUDIO_TYPE_ELEMENT:
 					break;
 				case Finesse.AUDIO_TYPE_WEB_AUDIO:
-					audioObj.panNode.pan.value = pan;
+					if(audioObj.panNode) {
+						audioObj.panNode.pan.value = pan;
+					}
 					break;
 				default:
 					throw "FinesseError: There is no audio initialized.";
